@@ -47,11 +47,41 @@ Incrementally update the knowledge graph using deterministic structural fingerpr
 
    2. Write the step 7 file list to `$UA_DIR/intermediate/changed-files-pre.json` as a JSON array of relative paths.
 
-   3. Resolve `$PLUGIN_ROOT`:
-      - Use `$CLAUDE_PLUGIN_ROOT` if set (Claude Code's hook context sets this).
-      - Otherwise try `$HOME/.understand-anything-plugin`.
-      - Validate the chosen candidate by checking `$candidate/packages/core/dist/ignore-filter.js` exists.
-      - If neither resolves: report "Cannot locate plugin install at `$CLAUDE_PLUGIN_ROOT` or `$HOME/.understand-anything-plugin`; auto-update aborted. Run `/understand` to re-baseline." and **STOP**. Do **not** silently skip — silent skip reproduces issue #153.
+   3. Resolve `$PLUGIN_ROOT` by running `resolve-plugin-root.mjs` (next to `skills/understand/SKILL.md`). That script prints the UA plugin root (`understand-anything-plugin/`). Identity is `package.json` **and** `packages/core/` — never a directory that only has `package.json` + `pnpm-workspace.yaml`.
+      - If `$CLAUDE_PLUGIN_ROOT` is set and `$CLAUDE_PLUGIN_ROOT/skills/understand/resolve-plugin-root.mjs` exists, run that copy (the script still applies identity, including to `$CLAUDE_PLUGIN_ROOT` itself).
+      - Otherwise locate the first existing `skills/understand/resolve-plugin-root.mjs` under the same candidate roots the script itself searches, then run `node` on it.
+      - After `$PLUGIN_ROOT` is set, confirm `$PLUGIN_ROOT/packages/core/dist/ignore-filter.js` exists (auto-update needs the built filter).
+      - If the script cannot be found, exits non-zero, or the built filter is missing: report "Cannot locate plugin install at `$CLAUDE_PLUGIN_ROOT` or `$HOME/.understand-anything-plugin`; auto-update aborted. Run `/understand` to re-baseline." and **STOP**. Do **not** silently skip — silent skip reproduces issue #153.
+
+      ```bash
+      RESOLVER=""
+      for candidate in \
+        ${CLAUDE_PLUGIN_ROOT:+"$CLAUDE_PLUGIN_ROOT/skills/understand/resolve-plugin-root.mjs"} \
+        "$HOME/.understand-anything-plugin/skills/understand/resolve-plugin-root.mjs" \
+        "${OMP_PLUGINS_ROOT:-$HOME/.omp/plugins}/node_modules/understand-anything/understand-anything-plugin/skills/understand/resolve-plugin-root.mjs" \
+        ${XDG_DATA_HOME:+"$XDG_DATA_HOME/omp/plugins/node_modules/understand-anything/understand-anything-plugin/skills/understand/resolve-plugin-root.mjs"} \
+        "$HOME/.codex/understand-anything/understand-anything-plugin/skills/understand/resolve-plugin-root.mjs" \
+        "$HOME/.opencode/understand-anything/understand-anything-plugin/skills/understand/resolve-plugin-root.mjs" \
+        "$HOME/.pi/understand-anything/understand-anything-plugin/skills/understand/resolve-plugin-root.mjs" \
+        "$HOME/understand-anything/understand-anything-plugin/skills/understand/resolve-plugin-root.mjs"; do
+        if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+          RESOLVER="$candidate"
+          break
+        fi
+      done
+      if [ -z "$RESOLVER" ]; then
+        echo "Cannot locate plugin install at ${CLAUDE_PLUGIN_ROOT:-<unset CLAUDE_PLUGIN_ROOT>} or $HOME/.understand-anything-plugin; auto-update aborted. Run /understand to re-baseline."
+
+        exit 1
+      fi
+      PLUGIN_ROOT=$(node "$RESOLVER") || exit 1
+      if [ ! -f "$PLUGIN_ROOT/packages/core/dist/ignore-filter.js" ]; then
+        echo "Cannot locate plugin install at ${CLAUDE_PLUGIN_ROOT:-<unset CLAUDE_PLUGIN_ROOT>} or $HOME/.understand-anything-plugin; auto-update aborted. Run /understand to re-baseline."
+
+        exit 1
+      fi
+      ```
+
 
    4. Write `$UA_DIR/intermediate/ignore-filter.mjs`:
       ```javascript

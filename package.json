@@ -1,6 +1,9 @@
 {
   "name": "understand-anything",
   "private": true,
+  "omp": {
+    "extensions": ["./extensions/omp-understand.mjs"]
+  },
   "type": "module",
   "description": "An open-source tool combining LLM intelligence + static analysis to produce interactive dashboards for understanding codebases.",
   "license": "MIT",

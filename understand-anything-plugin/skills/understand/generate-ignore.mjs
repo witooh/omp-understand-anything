@@ -25,7 +25,8 @@
  * SKILL.md Phase 0 via its multi-candidate search) over the
  * `resolve(__dirname, '../..')` heuristic. The relative path breaks when
  * `skills/understand/` is copied into a runtime skills directory whose
- * parent is not the plugin checkout.
+ * parent is not the plugin checkout. Identity is package.json AND
+ * packages/core — never a monorepo/OMP package root.
  */
 
 import { createRequire } from 'node:module';
@@ -37,7 +38,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function resolvePluginRoot() {
   const envRoot = process.env.PLUGIN_ROOT;
-  if (envRoot && existsSync(join(envRoot, 'package.json'))) {
+  if (
+    envRoot &&
+    existsSync(join(envRoot, 'package.json')) &&
+    existsSync(join(envRoot, 'packages/core'))
+  ) {
     return envRoot;
   }
   return resolve(__dirname, '../..');

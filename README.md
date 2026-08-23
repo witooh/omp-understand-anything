@@ -197,6 +197,14 @@ Understand-Anything works across multiple AI coding platforms.
 /plugin install understand-anything
 ```
 
+### OMP (Native)
+
+```bash
+omp plugin install github:witooh/omp-understand-anything
+```
+
+After restart, invoke `/understand` or `/skill:understand`.
+
 
 ### One-line install (Codex / OpenCode / OpenClaw / Antigravity / Gemini CLI / Pi Agent / Vibe CLI / VS Code Copilot / Hermes / Cline / KIMI CLI / Trae / Nanobot / Kiro)
 
@@ -256,6 +264,7 @@ For personal skills (available across all projects), run the `install.sh` above 
 | Platform | Status | Install Method |
 |----------|--------|----------------|
 | Claude Code | ✅ Native | Plugin marketplace |
+| OMP | ✅ Native | `omp plugin install github:witooh/omp-understand-anything` |
 | Cursor | ✅ Supported | Auto-discovery |
 | VS Code + GitHub Copilot | ✅ Supported | Auto-discovery |
 | Copilot CLI | ✅ Supported | Plugin install |
