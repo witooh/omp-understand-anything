@@ -11,6 +11,7 @@ describe('root omp manifest', () => {
     const pkg = JSON.parse(readFileSync(resolve(repoRoot, 'package.json'), 'utf-8'));
 
     expect(pkg.name).toBe('understand-anything');
+    expect(pkg.version).toBe('2.9.4');
     expect(pkg.omp.extensions).toEqual(['./extensions/omp-understand.mjs']);
 
     const extensionPath = resolve(repoRoot, pkg.omp.extensions[0]);

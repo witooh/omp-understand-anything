@@ -33,6 +33,20 @@ function parseDescription(text) {
   return description ? description[1].trim() : '';
 }
 
+/** Match omp v18.1.9 `prompts/skills/user-invocation.md`. */
+function wrapSkillInvocation(name, body, baseDir, userArgs) {
+  const args = typeof userArgs === 'string' ? userArgs.trim() : '';
+  const argLine = args ? `\nUser: ${args}` : '';
+  return (
+    `[IMPORTANT: User invoked the "${name}" skill; follow its instructions. Full skill below.]\n\n` +
+    `${body.trim()}\n\n` +
+    `---\n\n` +
+    `[Skill directory: ${baseDir}]\n` +
+    'Resolve relative paths in this skill (e.g. `scripts/foo.js`, `templates/config.yaml`) against this absolute directory; read referenced assets and templates; run scripts with the terminal tool when skill instructions call for it.' +
+    argLine
+  );
+}
+
 function findDataDir(cwd) {
   const legacy = join(cwd, '.understand-anything');
   return existsSync(legacy) ? legacy : join(cwd, '.ua');
@@ -72,13 +86,19 @@ function sendCustom(pi, customType, content, options) {
 
 export default function ompUnderstand(pi) {
   for (const name of COMMAND_NAMES) {
-    const raw = readFileSync(join(pluginRoot, 'skills', name, 'SKILL.md'), 'utf8');
+    const skillDir = join(pluginRoot, 'skills', name);
+    const raw = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
     const body = stripFrontmatter(raw);
     const description = parseDescription(raw);
     pi.registerCommand(name, {
       description,
-      handler() {
-        sendCustom(pi, 'com.understand-anything.skill', body, { triggerTurn: true });
+      handler(args) {
+        sendCustom(
+          pi,
+          'com.understand-anything.skill',
+          wrapSkillInvocation(name, body, skillDir, args),
+          { triggerTurn: true },
+        );
       },
     });
   }

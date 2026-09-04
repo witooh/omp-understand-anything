@@ -1,5 +1,6 @@
 {
   "name": "understand-anything",
+  "version": "2.9.4",
   "private": true,
   "omp": {
     "extensions": ["./extensions/omp-understand.mjs"]

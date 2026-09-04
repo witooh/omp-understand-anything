@@ -206,6 +206,23 @@ describe('OMP understand extension', () => {
       false,
     );
     expect(messages[0].message.content).not.toMatch(/^---/);
+    expect(messages[0].message.content).toContain(
+      '[IMPORTANT: User invoked the "understand" skill; follow its instructions. Full skill below.]',
+    );
+    expect(messages[0].message.content).toContain(
+      `[Skill directory: ${join(repoRoot, 'understand-anything-plugin', 'skills', 'understand')}]`,
+    );
+    expect(messages[0].message.content).not.toContain('\nUser: ');
+  });
+
+  it('forwards slash arguments as User args like native /skill: invocation', async () => {
+    const { commands, messages, runFactory } = createFakePi();
+    runFactory();
+
+    await commands.get('understand').handler('--full --language th');
+
+    expect(messages).toHaveLength(1);
+    expect(messages[0].message.content).toContain('User: --full --language th');
   });
 
   describe('tool_result auto-update', () => {
